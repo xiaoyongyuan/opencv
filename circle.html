@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style type="text/css">
+    .InputOutput {
+        float: left;
+        margin: 10px;
+    }
+</style>
+<body>
+    <div>
+        <div class="InputOutput">
+            <div class="caption">srcImg<input type="file" id="inputFile" name="file" /></div>
+            <img id="srcImg" alt="No Image" />
+        </div>
+
+        <!--结果展示区域-->
+        <div class="InputOutput">
+            <div class="caption">dstImg</div>
+            <canvas id="dstImg"></canvas>
+        </div>
+    </div>
+    <script type="text/javascript">
+        let imgElement = document.getElementById("srcImg");
+        let canvasOutput = document.getElementById('dstImg')
+        let fileElement = document.getElementById("inputFile");
+        fileElement.addEventListener("change",
+            (e) => { imgElement.src = URL.createObjectURL(e.target.files[0]); },
+            false);
+        imgElement.onload = function () {
+            let src = cv.imread('srcImg');
+            let dst = cv.Mat.zeros(src.rows, src.cols, cv.CV_8U);
+            let lines = new cv.Mat();
+            let color = new cv.Scalar(255, 0, 0);
+            cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+            cv.Canny(src, src, 50, 200, 3);
+            cv.HoughLinesP(src, lines, 1, Math.PI / 180, 2, 0, 0);
+            for (let i = 0; i < lines.rows; ++i) {
+                let startPoint = new cv.Point(lines.data32S[i * 4], lines.data32S[i * 4 + 1]);
+                let endPoint = new cv.Point(lines.data32S[i * 4 + 2], lines.data32S[i * 4 + 3]);
+                // console.log(startPoint,endPoint)
+                cv.line(dst, startPoint, endPoint, color);
+            }
+            cv.imshow(canvasOutput, dst);
+            src.delete();
+            dst.delete();
+            lines.delete();
+        };
+    </script>
+    <script async src="./opencvjs/opencv.js"  type="text/javascript"></script>
+</body>
+</html>
